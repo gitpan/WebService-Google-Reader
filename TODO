@@ -1,0 +1,18 @@
+- refactor code
+
+- list api
+
+- edit api
+    - when do tokens expire?
+
+- search api
+
+- more documentation
+
+- more error checking
+
+- consider using HTTP::Cookies instead of directly setting Cookie header.
+this would allow users to stores cookies to disk if they pass in their
+own useragent.
+
+- consider using Test::Mock::LWP for testing
