@@ -1,19 +1,32 @@
-Search
------
-search in all:
-GET api/0/search/items/ids?q=ipod&num=1000&output=json&ck=1190056891644&client=scroll
+search for feeds:
+https://www.google.com/reader/directory/search?q=%22http%3A%2F%2Fblah%22&ck=1191269431282&client=scroll
 
-search in tag perl:
-GET api/0/search/items/ids?q=perl&num=1000&s=user%2F$user%2Flabel%2Fperl&output=json&ck=1190057270323&client=scroll
+quickadd- use this for website -> feed sub
+success:
+<script type="text/javascript">parent._FR_QuickAdd_success('http://example.com/blog/','feed/http://exampley.com/blog/atom.xml');
+failure:
+<script type="text/javascript">parent._FR_QuickAdd_moreResults('\042http://example.com\042');
+</script>
 
-can it take more than one 's' param?
+Export subscriptions as OPML:
+http://www.google.com/reader/subscriptions/export
 
-- get fresh $token
+Import subscriptions as OPML:
 
-Get results:
-POST api/0/stream/items/contents?ck=1190057162442&client=scroll
-i=8189154615362709089&i=1403036763243010560&i=-9139677202329817538&i=3177886374477734747&i=7610632914684479216&i=1267907423539014789&i=-514383885221946226&i=-780948678948259931&i=-1238972789743499696&i=4789887711584440515&i=-8635791051276037249&i=4240116631900813921&i=8830188024122977841&i=6949915035740465691&i=-1465771173937141198&i=-5766446570472452344&i=4963529704796564709&i=661544239876925492&i=-745381259623378492&i=-8462149058063913055&T=$token
+POST /reader/subscriptions/import HTTP/1.1
+Content-Type: multipart/form-data; boundary=---------------------------12345
+Content-Length: $len
+-----------------------------12345
+Content-Disposition: form-data; name="T"
 
-Next results:
-POST /reader/api/0/stream/items/contents?sa=N&start=20&ck=1190057362569&client=scroll HTTP/1.1
-...
+$token
+-----------------------------12345
+Content-Disposition: form-data; name="action"
+
+opml-upload
+-----------------------------12345
+
+Content-Disposition: form-data; name="opml-file"; filename="$filename"
+Content-Type: text/xml
+
+$opml

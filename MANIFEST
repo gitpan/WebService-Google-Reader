@@ -1,7 +1,11 @@
 Changes
-ex/get-unread.pl
+ex/get-latest.pl
+ex/reset-account.pl
+ex/search.pl
 lib/WebService/Google/Reader.pm
+lib/WebService/Google/Reader/Constants.pm
 lib/WebService/Google/Reader/Feed.pm
+lib/WebService/Google/Reader/ListElement.pm
 Makefile.PL
 MANIFEST			This list of files
 NOTES

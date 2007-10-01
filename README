@@ -17,12 +17,10 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
     Class::Accessor::Fast
-    Crypt::SSLeay
-    HTTP::Request
+    Crypt::SSLeay or IO::Socket::SSL
+    JSON::Any
     LWP::UserAgent
     Test::More
-    URI
-    URI::Escape
     XML::Atom
 
 COPYRIGHT AND LICENCE

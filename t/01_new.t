@@ -9,15 +9,17 @@ use WebService::Google::Reader;
 
 {
     my @methods = qw(
-        login feed _request
-        continue cookie error password scheme response ua username
+        error password scheme ua username
+        edit feed list search
+        subscribe unsubscribe subscriptions subs feeds tags labels opml        
+        _login _request _token _public _cookie _encode_type
     );
     can_ok( 'WebService::Google::Reader', @methods );
 }
 
 {
     my @methods = qw(
-        entry continuation previous continue reader request
+        continuation ids request
     );
     can_ok( 'WebService::Google::Reader::Feed', @methods );
 }
