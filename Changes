@@ -1,5 +1,9 @@
 Revision history for WebService-Google-Reader
 
+0.01_3  Mon Oct 8 19:46:25 GMT 2007
+    - Finalized API.
+    - Flushed out documentation.
+
 0.01_2  Mon Oct 1 23:04:44 GMT 2007
     - Added list, edit, search.
     - Used a cookie_jar instead of directly setting header.

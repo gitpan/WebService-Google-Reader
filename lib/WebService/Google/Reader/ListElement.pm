@@ -5,6 +5,7 @@ use base qw( Class::Accessor::Fast );
 
 __PACKAGE__->mk_ro_accessors(qw(
     id categories count firstitemmsec label shared title value
+    isBloggerUser userId userEmail
 ));
 
 sub new {
@@ -37,8 +38,8 @@ WebService::Google::Reader::ListItem
 
 =head1 DESCRIPTION
 
-This module provides the following accessors. Each list type populates a 
-different subset of the fields. Stringifying a ListElement will return the 
+This module provides the following accessors. Each list type populates a
+different subset of the fields. Stringifying a ListElement will return the
 contents the B<id> field.
 
 =over
@@ -47,7 +48,7 @@ contents the B<id> field.
 
 =item categories
 
-This is a list of ListElements.
+This is a reference to more ListElements.
 
 =item count
 
@@ -60,6 +61,12 @@ This is a list of ListElements.
 =item title
 
 =item value
+
+=item isBloggerUser
+
+=item userId
+
+=item userEmail
 
 =back
 

@@ -17,8 +17,8 @@ my $feed = $reader->search( $query, feed => \@feeds, count => 50 )
 do {
     for my $entry ( $feed->entries ) {
         print $entry->title, "\n";
-        print $entry->link->href, "\n";
+        print $entry->link->href, "\n" if $entry->link and $entry->link->href;
     }
 
     sleep 1;
-} while ( $reader->search( $feed ) );
+} while ( $reader->more( $feed ) );

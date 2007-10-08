@@ -3,18 +3,40 @@ package WebService::Google::Reader::Feed;
 use strict;
 use base qw( XML::Atom::Feed Class::Accessor::Fast );
 
-use constant NS_READER => 'http://www.google.com/schemas/reader/atom/';
+use WebService::Google::Reader::Constants qw( NS_GOOGLE_READER );
 
-__PACKAGE__->mk_accessors(qw( ids count request ));
+__PACKAGE__->mk_accessors(qw( continuation count ids request ));
 
 sub new {
     my ($class, %params) = @_;
     return bless \%params, $class;
 }
 
-sub continuation {
-    return $_[0]->get( NS_READER, 'continuation' );
+sub init {
+    my $self = shift;
+
+    $self->SUPER::init( @_ );
+
+    my $continuation = $self->get( NS_GOOGLE_READER, 'continuation' );
+    $self->continuation( $continuation) if defined $continuation;
+
+    return $self;
 }
+
+sub XML::Atom::Entry::stream_id {
+    my ($self) = @_;
+
+    my $stream_id;
+    my $source = XML::Atom::Util::first( $self->elem, $self->ns, 'source' );
+    if ( $source ) {
+        $stream_id = $source->getAttribute('gr:stream-id');
+        if ($] >= 5.008) {
+            require Encode;
+            Encode::_utf8_off($stream_id) unless $XML::Atom::ForceUnicode;
+        }
+    }
+    return $stream_id;
+};
 
 1;
 
@@ -22,13 +44,15 @@ __END__
 
 =head1 NAME
 
-WebService::Google::Reader::Feed- subclass of C<XML::Atom::Feed>
+WebService::Google::Reader::Feed - subclass of C<XML::Atom::Feed>
 
 =head1 METHODS
 
 =over
 
 =item $feed = WebService::Google::Reader::Feed->B<new>( %params )
+
+=item $feed->init( %params )
 
 =item $string = $feed->B<continuation>
 

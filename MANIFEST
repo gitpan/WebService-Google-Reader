@@ -1,7 +1,7 @@
 Changes
 ex/get-latest.pl
 ex/reset-account.pl
-ex/search.pl
+ex/search-feeds.pl
 lib/WebService/Google/Reader.pm
 lib/WebService/Google/Reader/Constants.pm
 lib/WebService/Google/Reader/Feed.pm
@@ -15,5 +15,4 @@ t/01_new.t
 t/99_kwalitee.t
 t/99_pod.t
 t/99_pod_coverage.t
-TODO
 META.yml                                 Module meta-data (added by MakeMaker)

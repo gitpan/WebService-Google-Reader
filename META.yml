@@ -1,7 +1,7 @@
 --- #YAML:1.0
 name:                WebService-Google-Reader
-version:             0.01_2
-abstract:            Perl interface for Google Reader
+version:             0.01_3
+abstract:            Perl interface to Google Reader
 license:             perl
 generated_by:        ExtUtils::MakeMaker version 6.36
 distribution_type:   module
