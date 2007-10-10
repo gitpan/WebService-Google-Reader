@@ -14,7 +14,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.01_3';
+our $VERSION = '0.02';
 
 if ( DEBUG ) {
     require Carp;
@@ -516,7 +516,6 @@ sub _request {
 
     if ( HAS_ZLIB ) {
         $req->header( accept_encoding => 'gzip,deflate' );
-        # This worked for the majority of requests, but for EDIT_SUBS_URL
         # Doesn't always work; gets 415- unsupported media type for some urls.
         #if ( my $content = $req->content ) {
         #    if ( $content = Compress::Zlib::memGzip( $content ) ) {
@@ -781,7 +780,7 @@ WebService::Google::Reader - Perl interface to Google Reader
         password => $pass,
     );
 
-    my $feed = $reader->unread( count => 100);
+    my $feed = $reader->unread( count => 100 );
     my @entries = $feed->entries;
 
     # Fetch past entries.
@@ -811,7 +810,7 @@ are accepted:
 Required for accessing any personalized or account-related functionality
 (reading-list, editing, etc.).
 
-=item B<secure> or B<https>
+=item B<https> / B<secure>
 
 Use https scheme for all requests, even when not required.
 
@@ -1123,7 +1122,7 @@ Marks all the given entries as "read".
 
 =head2 Miscellaneous
 
-These are list of other useful methods.
+These are a list of other useful methods.
 
 =over
 
@@ -1232,10 +1231,11 @@ Entries which have been kept unread.
 
 =head1 NOTES
 
-If C<Compress::Zlib> is found, then requests will accept compressed responses
-and will be automatically decompress them.
+If C<Compress::Zlib> is found, then requests will accept compressed responses.
 
 =head1 SEE ALSO
+
+L<XML::Atom::Feed>
 
 L<http://code.google.com/p/pyrfeed/wiki/GoogleReaderAPI>
 

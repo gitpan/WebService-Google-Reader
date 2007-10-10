@@ -29,13 +29,6 @@ __END__
 
 WebService::Google::Reader::ListItem
 
-=head1 SYNOPSIS
-
-    my @list = $reader->list( 'subscriptions' );
-    for my $elm (@list) {
-        print $list, "\n";
-    }
-
 =head1 DESCRIPTION
 
 This module provides the following accessors. Each list type populates a
@@ -77,9 +70,5 @@ This is a reference to more ListElements.
 =item $elm = WebService::Google::Reader::ListElement->B<new>( $ref )
 
 =back
-
-=head1 SEE ALSO
-
-L<WebService::Google::Reader>
 
 =cut

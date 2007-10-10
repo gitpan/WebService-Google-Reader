@@ -44,7 +44,11 @@ __END__
 
 =head1 NAME
 
-WebService::Google::Reader::Feed - subclass of C<XML::Atom::Feed>
+WebService::Google::Reader::Feed
+
+=head1 DESCRIPTION
+
+Subclass of C<XML::Atom::Feed>.
 
 =head1 METHODS
 
@@ -52,12 +56,16 @@ WebService::Google::Reader::Feed - subclass of C<XML::Atom::Feed>
 
 =item $feed = WebService::Google::Reader::Feed->B<new>( %params )
 
-=item $feed->init( %params )
+=item $feed->B<init>( %params )
 
 =item $string = $feed->B<continuation>
 
 Returns the continuation string, if any is present.
 
 =back
+
+=head1 SEE ALSO
+
+L<XML::Atom::Feed>
 
 =cut
