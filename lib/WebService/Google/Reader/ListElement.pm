@@ -27,7 +27,7 @@ __END__
 
 =head1 NAME
 
-WebService::Google::Reader::ListItem
+WebService::Google::Reader::ListElement
 
 =head1 DESCRIPTION
 

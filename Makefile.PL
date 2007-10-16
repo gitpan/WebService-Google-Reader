@@ -22,5 +22,5 @@ WriteMakefile(
         @prereq
     },
     dist          => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean         => { FILES => 'WebServce-Google-Reader-*' },
+    clean         => { FILES => 'WebService-Google-Reader-*' },
 );
