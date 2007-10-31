@@ -27,7 +27,7 @@ use constant ATOM_URL => READER_URL.'/atom/';
 use constant ATOM_PUBLIC_URL => READER_URL.'/public/atom/';
 use constant API_URL => READER_URL.'/api/0';
 use constant PING_URL => READER_URL.'/ping';
-use constant EXPORT_SUBS_URL => READER_URL.'/subscribtions/export';
+use constant EXPORT_SUBS_URL => READER_URL.'/subscriptions/export';
 
 use constant EDIT_ENTRY_TAG_URL => API_URL.'/edit-tag';
 use constant EDIT_MARK_READ_URL => API_URL.'/mark-all-as-read';

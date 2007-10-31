@@ -1,5 +1,8 @@
 Revision history for WebService-Google-Reader
 
+0.04 Wed Oct 31 22:28:42 GMT 2007
+    - Fixed typo in url.
+
 0.03  Tue Oct 16 02:11:53 GMT 2007
     - Minor Pod correction.
 
