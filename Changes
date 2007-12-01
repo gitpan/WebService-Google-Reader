@@ -1,5 +1,8 @@
 Revision history for WebService-Google-Reader
 
+0.06  Sat Dec 1 16:19:39 UTC 2007
+    - Required 5.6.
+
 0.05  Sat Dec 1 03:09:09 UTC 2007
     - Used warnings for better kwalitee.
 
