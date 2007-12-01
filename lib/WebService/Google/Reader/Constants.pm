@@ -16,7 +16,7 @@ use constant DEBUG => $ENV{ WEBSERVICE_GOOGLE_READER_DEBUG } || 0;
 
 my $has_zlib;
 BEGIN {
-    $has_zlib = eval { require Compress::Zlib; 1 } ? 1 : 0;
+    $has_zlib = eval 'require Compress::Zlib; 1' ? 1 : 0;
 }
 use constant HAS_ZLIB => $has_zlib;
 

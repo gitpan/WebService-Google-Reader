@@ -15,7 +15,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 if ( DEBUG ) {
     require Carp;
