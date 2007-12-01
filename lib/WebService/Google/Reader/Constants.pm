@@ -1,6 +1,7 @@
 package WebService::Google::Reader::Constants;
 
 use strict;
+use warnings;
 use base qw( Exporter );
 
 our @EXPORT = do {

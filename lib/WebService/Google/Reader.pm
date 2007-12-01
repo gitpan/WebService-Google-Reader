@@ -1,6 +1,7 @@
 package WebService::Google::Reader;
 
 use strict;
+use warnings;
 use base qw( Class::Accessor::Fast );
 
 use HTTP::Cookies;
@@ -14,7 +15,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 if ( DEBUG ) {
     require Carp;
@@ -505,7 +506,7 @@ sub _login {
 sub _request {
     my ($self, $req, $count) = @_;
 
-    return if 2 <= $count;
+    return if $count and 2 <= $count;
 
     # Assume all POST requests are secure.
     $req->uri->scheme( $self->scheme ) if 'GET' eq $req->method;
