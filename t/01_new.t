@@ -1,10 +1,10 @@
 use strict;
-use Test::More tests=>3;
+use Test::More tests => 3;
 use WebService::Google::Reader;
 
 {
     my $reader = WebService::Google::Reader->new;
-    isa_ok( $reader, 'WebService::Google::Reader', 'Reader->new()' );
+    isa_ok($reader, 'WebService::Google::Reader', 'Reader->new()');
 }
 
 {
@@ -31,12 +31,12 @@ use WebService::Google::Reader;
         _encode_feed _encode_tag _encode_state _encode_entry _feed _list
         _edit _edit_tag
     );
-    can_ok( 'WebService::Google::Reader', @methods );
+    can_ok('WebService::Google::Reader', @methods);
 }
 
 {
     my @methods = qw(
         continuation count ids request
     );
-    can_ok( 'WebService::Google::Reader::Feed', @methods );
+    can_ok('WebService::Google::Reader::Feed', @methods);
 }

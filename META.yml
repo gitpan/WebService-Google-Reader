@@ -1,19 +1,29 @@
 --- #YAML:1.0
-name:                WebService-Google-Reader
-version:             0.07
-abstract:            Perl interface to Google Reader
-license:             perl
-generated_by:        ExtUtils::MakeMaker version 6.36
-distribution_type:   module
-requires:     
-    Class::Accessor::Fast:         0
-    Crypt::SSLeay:                 0
-    JSON::Any:                     0
-    LWP::UserAgent:                0
-    Test::More:                    0
-    XML::Atom:                     0
-meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.2.html
-    version: 1.2
+name:               WebService-Google-Reader
+version:            0.08
+abstract:           Perl interface to Google Reader
 author:
     - gray <gray@cpan.org>
+license:            perl
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    Class::Accessor::Fast:  0
+    Crypt::SSLeay:        0
+    JSON::Any:            0
+    LWP::UserAgent:       0
+    Test::More:           0
+    XML::Atom:            0
+resources:
+    repository:  http://github.com/gray/webservice-google-reader
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.50
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

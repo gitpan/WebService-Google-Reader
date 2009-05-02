@@ -2,17 +2,17 @@ package WebService::Google::Reader::Constants;
 
 use strict;
 use warnings;
-use base qw( Exporter );
+use base qw(Exporter);
 
 our @EXPORT = do {
     no strict 'refs';
     (
-        qw( DEBUG HAS_ZLIB NS_GOOGLE_READER ),
-        grep( /_URL$/, keys %{ __PACKAGE__.'::' } ),
+        qw(DEBUG HAS_ZLIB NS_GOOGLE_READER),
+        grep(/_URL$/, keys %{__PACKAGE__.'::'}),
     );
 };
 
-use constant DEBUG => $ENV{ WEBSERVICE_GOOGLE_READER_DEBUG } || 0;
+use constant DEBUG => $ENV{WEBSERVICE_GOOGLE_READER_DEBUG} || 0;
 
 my $has_zlib;
 BEGIN {
@@ -34,6 +34,7 @@ use constant EDIT_ENTRY_TAG_URL => API_URL.'/edit-tag';
 use constant EDIT_MARK_READ_URL => API_URL.'/mark-all-as-read';
 use constant EDIT_PREF_URL => API_URL.'/preference/set';
 use constant EDIT_SUB_URL => API_URL.'/subscription/edit';
+use constant EDIT_SUB_PREFS_URL => API_URL.'/preference/stream/set';
 use constant EDIT_TAG_DISABLE_URL => API_URL.'/disable-tag';
 use constant EDIT_TAG_SHARE_URL => API_URL.'/tag/edit';
 

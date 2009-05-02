@@ -2,19 +2,19 @@ package WebService::Google::Reader::ListElement;
 
 use strict;
 use warnings;
-use base qw( Class::Accessor::Fast );
+use base qw(Class::Accessor::Fast);
 
 __PACKAGE__->mk_ro_accessors(qw(
-    id categories count firstitemmsec label shared title value
+    id categories count firstitemmsec label shared sortid title value
     isBloggerUser userId userEmail
 ));
 
 sub new {
     my ($class, $ref) = @_;
     my $self = bless $ref, $class;
-    if ( exists $self->{categories} ) {
-        for my $cat ( @{ $self->{categories} } ) {
-            $cat = __PACKAGE__->new( $cat );
+    if (exists $self->{categories}) {
+        for my $cat (@{$self->{categories}}) {
+            $cat = __PACKAGE__->new($cat);
         }
     }
     return $self;
@@ -52,6 +52,8 @@ This is a reference to more ListElements.
 
 =item shared
 
+=item sortid
+
 =item title
 
 =item value
@@ -68,7 +70,7 @@ This is a reference to more ListElements.
 
 =over
 
-=item $elm = WebService::Google::Reader::ListElement->B<new>( $ref )
+=item $elm = WebService::Google::Reader::ListElement->B<new>($ref)
 
 =back
 
