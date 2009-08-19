@@ -1,3 +1,4 @@
+.perlcriticrc
 Changes
 ex/get-latest.pl
 ex/reset-account.pl
@@ -12,7 +13,8 @@ NOTES
 README
 t/00_load.t
 t/01_new.t
-t/99_kwalitee.t
-t/99_pod.t
-t/99_pod_coverage.t
+xt/kwalitee.t
+xt/perlcritic.t
+xt/pod.t
+xt/pod_coverage.t
 META.yml                                 Module meta-data (added by MakeMaker)

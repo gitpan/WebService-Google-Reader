@@ -7,7 +7,8 @@ use base qw(Class::Accessor::Fast);
 use HTTP::Cookies;
 use HTTP::Request::Common qw(GET POST);
 use LWP::UserAgent;
-use JSON::Any;
+use JSON;
+use URI;
 use URI::Escape;
 use URI::QueryParam;
 
@@ -15,12 +16,8 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.08';
-
-if (DEBUG) {
-    require Carp;
-    @SIG{qw(__DIE__ __WARN__)} = \(&Carp::confess, &Carp::cluck);
-}
+our $VERSION = '0.09';
+$VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors(qw(
     error password scheme token ua username
@@ -97,7 +94,9 @@ sub search {
     my $res = $self->_request($req) or return;
 
     my @ids = do {
-        my $ref = eval { JSON::Any->decode($res->decoded_content) };
+        my $ref = eval {
+            decode_json($res->decoded_content(charset => 'none'))
+        };
         if ($@) {
             $self->error("Failed to parse JSON response: $@");
             return;
@@ -696,7 +695,9 @@ sub _list {
 
     my $res = $self->_request(GET($uri)) or return;
 
-    my $ref = eval { JSON::Any->decode($res->decoded_content) };
+    my $ref = eval {
+        decode_json($res->decoded_content(charset=>'none'))
+    };
     if ($@) {
        $self->error("Failed to parse JSON response: $@");
         return;
@@ -1277,10 +1278,10 @@ L<http://search.cpan.org/dist/WebService-Google-Reader>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 gray <gray at cpan.org>, all rights reserved.
+Copyright (C) 2007-2009 gray <gray at cpan.org>, all rights reserved.
 
-This library is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =head1 AUTHOR
 
