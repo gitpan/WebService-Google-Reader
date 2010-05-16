@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use base qw(Class::Accessor::Fast);
 
-use HTTP::Cookies;
 use HTTP::Request::Common qw(GET POST);
 use LWP::UserAgent;
 use JSON;
@@ -16,7 +15,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors(qw(
@@ -36,9 +35,6 @@ sub new {
             agent => __PACKAGE__.'/'.$VERSION . (HAS_ZLIB ? ' (gzip)' :'')
         );
         $self->ua($ua);
-    }
-    unless ($ua->cookie_jar) {
-        $ua->cookie_jar(HTTP::Cookies->new(hide_cookie2 => 1));
     }
 
     $self->scheme($params{secure} || $params{https} ? 'https' : 'http');
@@ -76,7 +72,6 @@ sub search {
     my ($self, $query, %params) = @_;
 
     $self->_login or return;
-    $self->_token or return;
 
     my $uri = URI->new(SEARCH_IDS_URL);
 
@@ -123,7 +118,7 @@ sub more {
         return unless @ids;
 
         my $uri = URI->new(STREAM_IDS_CONTENT_URL, 'https');
-        $req = POST($uri, [ (map { ('i', $_) } @ids), T => $self->token ]);
+        $req = POST($uri, [ map { ('i', $_) } @ids ]);
     }
     elsif ($feed->elem) {
         return unless defined $feed->continuation and $feed->entries;
@@ -255,7 +250,6 @@ sub edit_feed {
     my ($self, $sub, %params) = @_;
 
     $self->_login or return;
-    $self->_token or return;
 
     my $url = EDIT_SUB_URL;
 
@@ -345,7 +339,6 @@ sub edit_entry {
     my ($self, $entry, %params) = @_;
 
     $self->_login or return;
-    $self->_token or return;
 
     my %fields = (ac => 'edit');
     for my $e ('ARRAY' eq ref $entry ? @$entry : ($entry)) {
@@ -422,7 +415,6 @@ sub mark_read {
     my ($self, %params) = @_;
 
     $self->_login or return;
-    $self->_token or return;
 
     my %fields;
     my @types = grep { exists $params{$_} } qw(feed state tag);
@@ -437,7 +429,6 @@ sub edit_preference {
     my ($self, $key, $val) = @_;
 
     $self->_login or return;
-    $self->_token or return;
 
     return $self->_edit(EDIT_PREF_URL, k => $key, v => $val);
 }
@@ -470,7 +461,6 @@ sub _login {
     my ($self, $force) = @_;
 
     return 1 if $self->_public;
-    return 1 if not $force and $self->_cookie;
 
     my $uri = URI->new(LOGIN_URL);
     $uri->query_form(
@@ -478,7 +468,6 @@ sub _login {
         Email    => $self->username,
         Passwd   => $self->password,
         source   => $self->ua->agent,
-        continue => READER_URL,
     );
     my $res = $self->ua->post($uri);
     my $content = $res->decoded_content;
@@ -489,15 +478,12 @@ sub _login {
         return;
     }
 
-    my ($sid) = $content =~ m[ ^SID=(.*)$ ]mx;
-    unless ($sid) {
-        $self->error('could not find SID value for cookie');
+    my ($token) = $content =~ m[ ^Auth=(.*)$ ]mx;
+    unless ($token) {
+        $self->error('could not find Auth token');
         return;
     }
-
-    $self->ua->cookie_jar->set_cookie(
-        0, SID => $sid, '/', '.google.com', undef, 1, 0, 160000000000
-    );
+    $self->token($token);
 
     return 1;
 }
@@ -514,24 +500,16 @@ sub _request {
 
     print $req->as_string, "-"x80, "\n" if DEBUG;
 
-    if (HAS_ZLIB) {
-        $req->header(accept_encoding => 'gzip,deflate');
-        # Doesn't always work; gets 415- unsupported media type for some urls.
-        #if (my $content = $req->content) {
-        #    if ($content = Compress::Zlib::memGzip($content)) {
-        #        $req->content($content);
-        #        $req->content_length(length $content);
-        #        $req->content_encoding('gzip');
-        #    }
-        #}
-    }
+    $req->header(authorization => 'GoogleLogin auth=' . $self->token)
+        if $self->token;
+    $req->header(accept_encoding => 'gzip,deflate') if HAS_ZLIB;
 
     my $res = $self->ua->request($req);
     if ($res->is_error) {
         # Need a fresh token.
-        if ($res->header('X-Reader-Google-Bad-Token')) {
+        if (401 == $res->code and $res->message =~ /^Token /) {
             print "Stale token- retrying\n" if DEBUG;
-            $self->_token(1) or return;
+            $self->_login(1) or return;
             return $self->_request($req,  $count++);
         }
 
@@ -542,27 +520,8 @@ sub _request {
     return $res;
 }
 
-# NOTE: any request that sends the token, should use https.
-sub _token {
-    my ($self, $force) = @_;
-
-    return 1 if $self->token and not $force;
-
-    $self->_login or return;
-
-    my $uri = URI->new(TOKEN_URL, 'https');
-    my $res = $self->_request(GET($uri)) or return;
-
-    return $self->token($res->decoded_content);
-}
-
 sub _public {
     return not $_[0]->username or not $_[0]->password;
-}
-
-sub _cookie {
-    # ick, HTTP::Cookies doesn't provide an accessor.
-    return $_[0]->ua->cookie_jar->{COOKIES}{'.google.com'}{'/'}{SID};
 }
 
 sub _encode_type {
@@ -730,7 +689,6 @@ sub _edit_tag {
     my ($self, $type, $tag, %params) = @_;
 
     $self->_login or return;
-    $self->_token or return;
 
     my %fields;
     push @{$fields{s}}, _encode_type($type => $tag);
@@ -1166,11 +1124,6 @@ indicates a bad (expired) token, it will request another token before
 performing the request again. Returns an C<HTTP::Response> on success, false
 on failure (check B<error>).
 
-=item B<_token>
-
-This is automatically called from within methods that require a user token.
-If successful, the token is available via the B<token> accessor.
-
 =item B<_states>
 
 Returns a list of all the known states. See L</STATES>.
@@ -1233,7 +1186,8 @@ Entries which have been kept unread.
 
 =head1 NOTES
 
-If C<Compress::Zlib> is found, then requests will accept compressed responses.
+If C<Compress::Zlib> is found, then requests will accept compressed
+responses.
 
 =head1 SEE ALSO
 
@@ -1244,7 +1198,7 @@ L<http://code.google.com/p/pyrfeed/wiki/GoogleReaderAPI>
 =head1 REQUESTS AND BUGS
 
 Please report any bugs or feature requests to
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=WebService-Google-Reader>.
+L<http://rt.cpan.org/Public/Bug/Report.html?Queue=WebService-Google-Reader>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
@@ -1258,6 +1212,10 @@ You can also look for information at:
 
 =over
 
+=item * GitHub Source Repository
+
+L<http://github.com/gray/webservice-google-reader>
+
 =item * AnnoCPAN: Annotated CPAN documentation
 
 L<http://annocpan.org/dist/WebService-Google-Reader>
@@ -1268,7 +1226,7 @@ L<http://cpanratings.perl.org/d/WebService-Google-Reader>
 
 =item * RT: CPAN's request tracker
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=WebService-Google-Reader>
+L<http://rt.cpan.org/Public/Dist/Display.html?Dist=WebService-Google-Reader>
 
 =item * Search CPAN
 
