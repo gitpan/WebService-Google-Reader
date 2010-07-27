@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               WebService-Google-Reader
-version:            0.10
+version:            0.11
 abstract:           Perl interface to Google Reader
 author:
     - gray <gray@cpan.org>
@@ -9,7 +9,7 @@ distribution_type:  module
 configure_requires:
     ExtUtils::MakeMaker:  0
 build_requires:
-    ExtUtils::MakeMaker:  0
+    Test::More:  0.82
 requires:
     Class::Accessor::Fast:  0
     Encode:               0
@@ -17,11 +17,11 @@ requires:
     HTTP::Request::Common:  0
     JSON:                 0
     LWP::UserAgent:       0
-    Test::More:           0
     URI:                  0
     URI::Escape:          0
     URI::QueryParam:      0
     XML::Atom:            0
+    XML::LibXML:          0
 resources:
     repository:  http://github.com/gray/webservice-google-reader
 no_index:
@@ -33,5 +33,4 @@ meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4
 recommends:
-    Compress::Zlib:  0
-    JSON::XS:        2
+    JSON::XS:  2
