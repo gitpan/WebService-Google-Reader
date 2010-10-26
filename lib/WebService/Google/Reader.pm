@@ -2,7 +2,7 @@ package WebService::Google::Reader;
 
 use strict;
 use warnings;
-use base qw(Class::Accessor::Fast);
+use parent qw(Class::Accessor::Fast);
 
 use HTTP::Request::Common qw(GET POST);
 use LWP::UserAgent;
@@ -15,7 +15,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors(qw(
@@ -101,7 +101,7 @@ sub search {
     $self->_login or return;
     $self->_token or return;
 
-    my $uri = URI->new(SEARCH_IDS_URL);
+    my $uri = URI->new(SEARCH_ITEM_IDS_URL);
 
     my %fields = (num => $params{results} || 1000);
 
@@ -144,11 +144,12 @@ sub more {
         my @ids = splice @{$feed->ids}, 0, $feed->count;
         return unless @ids;
 
-        my $uri = URI->new(STREAM_IDS_CONTENT_URL);
+        my $uri = URI->new(STREAM_FEED_CONTENTS_URL);
         $req = POST($uri, [ map { ('i', $_) } @ids ]);
     }
     elsif ($feed->elem) {
-        return unless defined $feed->continuation and $feed->entries;
+        return unless defined $feed->continuation;
+        return unless $feed->entries >= $feed->count;
         $req = $feed->request;
         $req->uri->query_param(c => $feed->continuation);
     }
@@ -237,7 +238,7 @@ sub rename_feed_tag {
     for my $feed (@feeds) {
         for my $cat ($self->categories) {
             for my $o ('ARRAY' eq ref $old ? @$old : ($old)) {
-                if ($old eq $cat->label or $old eq $cat->id) {
+                if ($o eq $cat->label or $o eq $cat->id) {
                     push @tagged, $feed->id;
                     next FEED;
                 }
@@ -477,7 +478,7 @@ sub opml {
 }
 
 sub ping {
-    my ($self, %fields) = @_;
+    my ($self) = @_;
     my $res = $self->_request(GET(PING_URL)) or return;
 
     return 1 if 'OK' eq $res->decoded_content;
@@ -699,7 +700,7 @@ sub _feed {
 
     $uri->query_form(\%fields);
 
-    my $feed = (__PACKAGE__.'::Feed')->new(request => GET($uri));
+    my $feed = (__PACKAGE__.'::Feed')->new(request => GET($uri), %params);
     return $self->more($feed);
 }
 
@@ -781,6 +782,7 @@ sub _states {
         tracking-kept-unread
     );
 }
+
 
 1;
 
