@@ -15,7 +15,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors(qw(
@@ -25,7 +25,7 @@ __PACKAGE__->mk_accessors(qw(
 sub new {
     my ($class, %params) = @_;
 
-    my $self = bless \%params, $class;
+    my $self = bless { %params }, $class;
 
     my $ua = $params{ua};
     unless (ref $ua and $ua->isa(q(LWP::UserAgent))) {
@@ -50,11 +50,11 @@ sub new {
 }
 
 sub debug {
-    my $self = shift;
-    return $self->{debug} unless @_;
+    my ($self, $val) = @_;
+    return $self->{debug} unless 2 == @_;
 
     my $ua = $self->ua;
-    if ($self->{debug} = (shift) ? 1 : 0) {
+    if ($val) {
         my $dump_sub = sub { $_[0]->dump(maxlength => 0); return };
         $ua->set_my_handler(request_send  => $dump_sub);
         $ua->set_my_handler(response_done => $dump_sub);
@@ -64,33 +64,20 @@ sub debug {
         $ua->set_my_handler(response_done => undef);
     }
 
-    return $self->{debug};
+    return $self->{debug} = $val;
 }
 
 ## Feeds
 
-sub feed {
-    return shift->_feed(feed => shift, @_);
-}
+sub feed  { shift->_feed(feed  => shift, @_) }
+sub tag   { shift->_feed(tag   => shift, @_) }
+sub state { shift->_feed(state => shift, @_) }
 
-sub tag {
-    return shift->_feed(tag => shift, @_);
-}
-
-sub state {
-    return shift->_feed(state => shift, @_);
-}
-
-sub shared {
-    return shift->state('broadcast', @_);
-}
-
-sub starred {
-    return shift->state('starred', @_);
-}
-
-sub unread {
-    return shift->state(
+sub shared  { shift->state('broadcast', @_) }
+sub starred { shift->state('starred',   @_) }
+sub liked   { shift->state('like', @_) }
+sub unread  {
+    shift->state(
         'reading-list', exclude => { state => 'read' }, @_
     );
 }
@@ -116,13 +103,10 @@ sub search {
     my $res = $self->_request($req) or return;
 
     my @ids = do {
-        my $ref = eval {
-            decode_json($res->decoded_content(charset => 'none'))
-        };
-        if ($@) {
+        my $ref = eval { from_json($res->decoded_content) } or do {
             $self->error("Failed to parse JSON response: $@");
             return;
-        }
+        };
         map { $_->{id} } @{$ref->{results}};
     };
     return unless @ids;
@@ -144,8 +128,8 @@ sub more {
         my @ids = splice @{$feed->ids}, 0, $feed->count;
         return unless @ids;
 
-        my $uri = URI->new(STREAM_FEED_CONTENTS_URL);
-        $req = POST($uri, [ map { ('i', $_) } @ids ]);
+        my $uri = URI->new(STREAM_ITEMS_CONTENTS_URL);
+        $req = POST $uri, [ output => 'atom', map { ('i', $_) } @ids ];
     }
     elsif ($feed->elem) {
         return unless defined $feed->continuation;
@@ -200,31 +184,31 @@ sub edit_state {
 }
 
 sub share_tag {
-    return shift->edit_tag(\@_, share => 1);
+    return shift->edit_tag(_listify(\@_), share => 1);
 }
 
 sub unshare_tag {
-    return shift->edit_tag(\@_, unshare => 1);
+    return shift->edit_tag(_listify(\@_), unshare => 1);
 }
 
 sub share_state {
-    return shift->edit_state(\@_, share => 1);
+    return shift->edit_state(_listify(\@_), share => 1);
 }
 
 sub unshare_state {
-    return shift->edit_state(\@_, unshare => 1);
+    return shift->edit_state(_listify(\@_), unshare => 1);
 }
 
 sub delete_tag {
-    return shift->edit_tag(\@_, delete => 1);
+    return shift->edit_tag(_listify(\@_), delete => 1);
 }
 
 sub mark_read_tag {
-    return shift->mark_read(tag => \@_);
+    return shift->mark_read(tag => _listify(\@_));
 }
 
 sub mark_read_state {
-    return shift->mark_read(state => \@_);
+    return shift->mark_read(state => _listify(\@_));
 }
 
 sub rename_feed_tag {
@@ -287,7 +271,7 @@ sub edit_feed {
     for my $s ('ARRAY' eq ref $sub ? @$sub : ($sub)) {
         if (__PACKAGE__.'::Feed' eq ref $s) {
             my $id = $s->id or next;
-            $id =~ s[^(user|webfeed|tag:google\.com,2005:reader/)][];
+            $id =~ s[^(?:user|webfeed|tag:google\.com,2005:reader/)][];
             $id =~ s[\?.*][];
             push @{$fields{s}}, $id;
         }
@@ -348,11 +332,11 @@ sub unstate_feed {
 }
 
 sub subscribe {
-    return shift->edit_feed(\@_, subscribe => 1);
+    return shift->edit_feed(_listify(\@_), subscribe => 1);
 }
 
 sub unsubscribe {
-    return shift->edit_feed(\@_, unsubscribe => 1);
+    return shift->edit_feed(_listify(\@_), unsubscribe => 1);
 }
 
 sub rename_feed {
@@ -360,21 +344,24 @@ sub rename_feed {
 }
 
 sub mark_read_feed {
-    return shift->mark_read(feed => \@_);
+    return shift->mark_read(feed => _listify(\@_));
 }
 
 ## Edit entries
 
 sub edit_entry {
     my ($self, $entry, %params) = @_;
+    return unless $entry;
 
     $self->_login or return;
     $self->_token or return;
 
     my %fields = (ac => 'edit');
     for my $e ('ARRAY' eq ref $entry ? @$entry : ($entry)) {
+        my $source = $e->source or next;
+        my $stream_id = $source->get_attr('gr:stream-id') or next;
         push @{$fields{i}}, $e->id;
-        push @{$fields{s}}, $e->stream_id;
+        push @{$fields{s}}, $stream_id;
     }
     return 1 unless @{$fields{i} || []};
 
@@ -417,28 +404,40 @@ sub unstate_entry {
 }
 
 sub share_entry {
-    return shift->edit_entry(shift, state => 'broadcast');
+    return shift->edit_entry(_listify(\@_), state => 'broadcast');
 }
 
 sub unshare_entry {
-    return shift->edit_entry(shift, unstate => 'broadcast');
+    return shift->edit_entry(_listify(\@_), unstate => 'broadcast');
 }
 
 sub star_entry {
-    return shift->edit_entry(shift, state => 'starred');
+    return shift->edit_entry(_listify(\@_), state => 'starred');
 }
 
 *star = *star = \&star_entry;
 
 sub unstar_entry {
-    return shift->edit_entry(shift, unstate => 'starred');
+    return shift->edit_entry(_listify(\@_), unstate => 'starred');
 }
 
 *unstar = *unstar = \&unstar_entry;
 
 sub mark_read_entry {
-    return shift->edit_entry(\@_, state => 'read');
+    return shift->edit_entry(_listify(\@_), state => 'read');
 }
+
+sub like_entry {
+    return shift->edit_entry(_listify(\@_), state => 'like');
+}
+
+*like = *like = \&like_entry;
+
+sub unlike_entry {
+    return shift->edit_entry(_listify(\@_), unstate => 'like');
+}
+
+*unlike = *unlike = \&unlike_entry;
 
 ## Miscellaneous
 
@@ -669,11 +668,12 @@ sub _encode_entry {
 
 sub _feed {
     my ($self, $type, $val, %params) = @_;
+    return unless $val;
 
     $self->_login or return;
 
     my $path = $self->_public ? ATOM_PUBLIC_URL : ATOM_URL;
-    my $uri = URI->new($path . _encode_type($type, $val, 1));
+    my $uri = URI->new($path . '/' . _encode_type($type, $val, 1));
 
     my %fields;
     if (my $count = $params{count}) {
@@ -714,13 +714,10 @@ sub _list {
 
     my $res = $self->_request(GET($uri)) or return;
 
-    my $ref = eval {
-        decode_json($res->decoded_content(charset=>'none'))
-    };
-    if ($@) {
+    my $ref = eval { from_json($res->decoded_content) } or do {
         $self->error("Failed to parse JSON response: $@");
         return;
-    }
+    };
 
     # Remove an unecessary level of indirection.
     my $aref = (grep { 'ARRAY' eq ref } values %$ref)[0] || [];
@@ -747,6 +744,7 @@ sub _edit {
 
 sub _edit_tag {
     my ($self, $type, $tag, %params) = @_;
+    return unless $tag;
 
     $self->_login or return;
     $self->_token or return;
@@ -779,8 +777,13 @@ sub _states {
     return qw(
         read kept-unread fresh starred broadcast reading-list
         tracking-body-link-used tracking-emailed tracking-item-link-used
-        tracking-kept-unread
+        tracking-kept-unread like
     );
+}
+
+sub _listify {
+    my ($aref) = @_;
+    return (1 == @$aref and 'ARRAY' eq ref $aref->[0]) ? @$aref : $aref;
 }
 
 
@@ -913,6 +916,10 @@ Shortcut for B<state>('starred').
 
 Shortcut for B<state>('reading-list', exclude => { state => 'read' })
 
+=item B<liked>
+
+Shortcut for B<state>('like').
+
 =back
 
 =over
@@ -1026,9 +1033,9 @@ to associate / unassociate the target feeds.
 
 Associate / unassociate a list of tags / states from a feed / feeds.
 
-=item B<subscribe>(@feeds)
+=item B<subscribe>(@feeds|[@feeds])
 
-=item B<unsubscribe>(@feeds)
+=item B<unsubscribe>(@feeds|[@feeds])
 
 Subscribe or unsubscribe from a list of feeds.
 
@@ -1036,7 +1043,7 @@ Subscribe or unsubscribe from a list of feeds.
 
 Renames a feed to the given title.
 
-=item B<mark_read_feed>(@feeds)
+=item B<mark_read_feed>(@feeds|[@feeds])
 
 Marks the feeds as read.
 
@@ -1070,17 +1077,17 @@ Only tags (and not states) can be disabled.
 
 =back
 
-=item B<share_tag>(@tags)
+=item B<share_tag>(@tags|[@tags])
 
-=item B<unshare_tag>(@tags)
+=item B<unshare_tag>(@tags|[@tags])
 
-=item B<share_state>(@states)
+=item B<share_state>(@states|[@states])
 
-=item B<unshare_state>(@states)
+=item B<unshare_state>(@states|[@states])
 
 Associate / unassociate the 'broadcast' state with the given tags / states.
 
-=item B<delete_tag>(@tags)
+=item B<delete_tag>(@tags|[@tags])
 
 Delete the given tags.
 
@@ -1097,9 +1104,9 @@ Renames the tags associated with any individual entries.
 Calls B<rename_feed_tag> and B<rename_entry_tag>, and finally
 B<delete_tag>.
 
-=item B<mark_read_tag>(@tags)
+=item B<mark_read_tag>(@tags|[@tags])
 
-=item B<mark_read_state>(@states)
+=item B<mark_read_state>(@states|[@states])
 
 Marks all entries as read for the given tags / states.
 
@@ -1131,25 +1138,35 @@ Associate / unassociate the entries with the given tags / states.
 
 Associate / unassociate the entries with the given tags / states.
 
-=item B<share_entry>(@entries)
+=item B<share_entry>(@entries|[@entries])
 
-=item B<unshare_entry>(@entries)
+=item B<unshare_entry>(@entries|[@entries])
 
 Marks all the given entries as "broadcast".
 
-=item B<star>
+=item B<star>(@entries|[@entries])
 
-=item B<star_entry>
+=item B<star_entry>(@entries|[@entries])
 
-=item B<unstar>
+=item B<unstar>(@entries|[@entries])
 
-=item B<unstar_entry>
+=item B<unstar_entry>(@entries|[@entries])
 
 Marks / unmarks all the given entries as "starred".
 
-=item B<mark_read_entry>(@entries)
+=item B<mark_read_entry>(@entries|[@entries])
 
 Marks all the given entries as "read".
+
+=item B<like>(@entries|[@entries])
+
+=item B<like_entry>(@entries|[@entries])
+
+=item B<unlike>(@entries|[@entries])
+
+=item B<unlike_entry>(@entries|[@entries])
+
+Marks / unmarks all the given entries as "liked".
 
 =back
 
