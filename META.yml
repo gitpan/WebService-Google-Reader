@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               WebService-Google-Reader
-version:            0.15
+version:            0.16
 abstract:           Perl interface to Google Reader
 author:
     - gray <gray@cpan.org>
@@ -12,7 +12,6 @@ build_requires:
     Test::More:  0.82
 requires:
     Class::Accessor::Fast:  0
-    Crypt::SSLeay:        0
     Encode:               0
     HTTP::Cookies:        0
     HTTP::Request::Common:  0
