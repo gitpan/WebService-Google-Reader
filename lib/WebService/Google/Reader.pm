@@ -15,7 +15,7 @@ use WebService::Google::Reader::Constants;
 use WebService::Google::Reader::Feed;
 use WebService::Google::Reader::ListElement;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors(qw(
@@ -34,7 +34,6 @@ sub new {
         );
         $self->ua($ua);
     }
-    $ua->ssl_opts(verify_hostname => 0) if $ua->can('ssl_opts');
 
     $self->compress(1);
     $self->debug(0);
@@ -539,8 +538,6 @@ sub _request {
 
     $req->header(authorization => 'GoogleLogin auth=' . $self->auth)
         if $self->auth;
-    $req->header(if_ssl_cert_subject => "/CN=(?i)\Q@{[$req->uri->host]}\E\$")
-        if 'https' eq $req->uri->scheme;
 
     my $res = $self->ua->request($req);
     if ($res->is_error) {
@@ -1326,7 +1323,7 @@ L<http://search.cpan.org/dist/WebService-Google-Reader>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007-2010 gray <gray at cpan.org>, all rights reserved.
+Copyright (C) 2007-2011 gray <gray at cpan.org>, all rights reserved.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
